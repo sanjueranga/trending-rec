@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / compiled files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+
+# Virtual environment
+.venv/
+env/
+venv/
+.env/ # If you use a .env directory for your environment
+
+# Environment variables
+.env
+*.env
+
+# IDE-specific files
+.idea/ # PyCharm
+.vscode/ # VS Code
+*.iml
+
+# Database files
+*.sqlite3
+*.db
+*.test_db.db # Common for test databases
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Uploaded files (if applicable)
+media/
+uploads/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Jupyter Notebook files
+.ipynb_checkpoints/
+
+# Miscellaneous
+.DS_Store # macOS specific
