@@ -50,9 +50,4 @@ class GenerationService:
             if line.strip()
         ]
         
-        # return prompts
-        print(prompts)
-
-        # print(filtered_response)
-    
         return prompts

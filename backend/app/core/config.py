@@ -17,6 +17,7 @@ Parameters:
 Task:
 Generate 5–7 creative prompts that match the topic, intention, and theme.
 These prompts should:
+- Be written as a full instruction, not just a short idea
 - Be concise and engaging
 - Work directly for content creation (e.g. videos, posts, blogs)
 - Be phrased as instructions or hooks, not explanations
