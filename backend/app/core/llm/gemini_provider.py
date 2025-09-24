@@ -14,7 +14,7 @@ class GeminiProvider(LLMProvider):
             raise ValueError("GEMINI_API_KEY not found in environment variables")
         
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
         
     async def generate(self, prompts: List[str], system_prompt: Optional[str] = None) -> str:
         """

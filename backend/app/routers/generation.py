@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List
+from typing import Dict, Any
 from ..services.generation_service import GenerationService
 
 router = APIRouter()
@@ -12,6 +12,11 @@ class GenerateRequest(BaseModel):
 
 class GenerateResponse(BaseModel):
     response: str
+
+class ErrorResponse(BaseModel):
+    status: str = "error"
+    message: str
+    details: Dict[str, Any] = None
 
 @router.post("/generate", response_model=GenerateResponse)
 async def generate_response(request: GenerateRequest):
@@ -27,6 +32,19 @@ async def generate_response(request: GenerateRequest):
         )
         return GenerateResponse(response=response)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorResponse(
+                status="error",
+                message=str(e)
+            ).dict()
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating response: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorResponse(
+                status="error",
+                message="Internal server error",
+                details={"error": str(e)}
+            ).dict()
+        )
