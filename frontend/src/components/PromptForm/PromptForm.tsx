@@ -14,6 +14,9 @@ import { useTopicSuggestions } from "@/hooks/useTopicSuggestions";
 export default function PromptForm() {
     const [topic, setTopic] = useState("");
     const [autoTheme, setAutoTheme] = useState(false);
+    const [intention, setIntention] = useState("");
+    const [theme, setTheme] = useState("");
+    const [instructions, setInstructions] = useState("");
 
     // Use the topic suggestions hook
     const { suggestions, loading } = useTopicSuggestions(topic);
@@ -22,6 +25,18 @@ export default function PromptForm() {
         setTopic(option.name);
         // You can add additional logic here when a topic is selected
         console.log("Selected topic:", option);
+    };
+
+    const handleGeneratePrompts = () => {
+        const formData = {
+            topic,
+            intention,
+            theme: autoTheme ? "Auto Trending Theme" : theme,
+            autoTheme,
+            instructions
+        };
+
+        console.log("Form Data:", JSON.stringify(formData, null, 2));
     };
 
     return (
@@ -47,7 +62,7 @@ export default function PromptForm() {
                 {/* Intention */}
                 <div className="space-y-2">
                     <Label htmlFor="intention">Intention</Label>
-                    <Select>
+                    <Select value={intention} onValueChange={setIntention}>
                         <SelectTrigger id="intention">
                             <SelectValue placeholder="Select an intention" />
                         </SelectTrigger>
@@ -68,18 +83,29 @@ export default function PromptForm() {
                             <span className="text-sm">Auto Trending Theme</span>
                         </div>
                     </div>
-                    <Input id="theme" placeholder="Enter theme (if not auto)" disabled={autoTheme} />
+                    <Input
+                        id="theme"
+                        placeholder="Enter theme (if not auto)"
+                        disabled={autoTheme}
+                        value={theme}
+                        onChange={(e) => setTheme(e.target.value)}
+                    />
                 </div>
 
                 {/* Brand Instructions */}
                 <div className="space-y-2">
                     <Label htmlFor="instructions">Brand Instructions</Label>
-                    <Textarea id="instructions" placeholder="Enter any brand identity/system instructions" />
+                    <Textarea
+                        id="instructions"
+                        placeholder="Enter any brand identity/system instructions"
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                    />
                 </div>
 
                 {/* Generate Button */}
                 <div className="pt-4">
-                    <Button className="w-full">Generate Prompts</Button>
+                    <Button className="w-full" onClick={handleGeneratePrompts}>Generate Prompts</Button>
                 </div>
             </CardContent>
         </Card>
