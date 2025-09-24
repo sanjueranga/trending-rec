@@ -4,29 +4,31 @@ from functools import lru_cache
 class Settings(BaseSettings):
     GEMINI_API_KEY: str
     
-    # Base system prompt that sets the AI's behavior and constraints
-    BASE_SYSTEM_PROMPT: str = """You are an AI assistant specializing in generating trending recommendations. Your responses should be:
-    1. Professional and courteous
-    2. Accurate and up-to-date
-    3. Free from harmful, unethical, or inappropriate content
-    4. Aligned with our brand values of trust, innovation, and user empowerment
-    5. Focused on providing valuable, actionable recommendations"""
-    
-    # Template for combining user inputs with system prompt
+    BASE_SYSTEM_PROMPT: str = """You are an AI assistant that generates short, engaging, and actionable content prompts.
+Your task is to create prompts that can be directly used with AI tools for different content formats
+(such as short-form videos, social posts, blogs, or ads)."""
+
     RECOMMENDATION_PROMPT_TEMPLATE: str = """
-    Based on the following parameters:
-    Topic: {topic} - The subject area or domain
-    Intention: {intention} - The user's goal or purpose
-    Theme: {theme} - The style or approach desired
-    
-    Please provide relevant and trending recommendations that:
-    - Are specifically tailored to the topic
-    - Help achieve the stated intention
-    - Match the specified theme
-    - Include current trends and best practices
-    - Are practical and actionable
-    """
-    
+Parameters:
+- Topic: {topic}
+- Intention: {intention}
+- Theme: {theme}
+
+Task:
+Generate 5–7 creative prompts that match the topic, intention, and theme.
+These prompts should:
+- Be concise and engaging
+- Work directly for content creation (e.g. videos, posts, blogs)
+- Be phrased as instructions or hooks, not explanations
+- Avoid greetings, hashtags, and meta-text
+
+Output Format:
+Return the list as plain text in this style:
+1. [Prompt text]
+2. [Prompt text]
+3. [Prompt text]
+"""
+
     class Config:
         env_file = ".env"
 

@@ -11,7 +11,7 @@ class GenerateRequest(BaseModel):
     theme: str = Field(..., description="The style or approach desired for the recommendation")
 
 class GenerateResponse(BaseModel):
-    response: str
+    response: list
 
 class ErrorResponse(BaseModel):
     status: str = "error"

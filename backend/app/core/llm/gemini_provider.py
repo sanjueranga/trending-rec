@@ -1,5 +1,6 @@
 import os
-from typing import List, Optional
+import re
+from typing import List, Optional, Dict
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -15,6 +16,36 @@ class GeminiProvider(LLMProvider):
         
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
+    
+    def _format_response(self, text: str) -> List[str]:
+        """
+        Format the raw response into a clean list of prompts.
+        
+        Args:
+            text: Raw response from LLM
+            
+        Returns:
+            List[str]: List of clean prompts
+        """
+        # Remove any markdown formatting
+        text = re.sub(r'\*\*|\*', '', text)
+        
+        # Split into lines and clean up
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        
+        prompts = []
+        for line in lines:
+            # Skip empty lines, hashtags, or explanatory text
+            if not line or line.startswith('#') or ':' in line or 'example' in line.lower():
+                continue
+            
+            # Remove leading numbers and dots
+            cleaned_line = re.sub(r'^\d+\.\s*', '', line)
+            
+            if cleaned_line:
+                prompts.append(cleaned_line)
+        
+        return prompts
         
     async def generate(self, prompts: List[str], system_prompt: Optional[str] = None) -> str:
         """
@@ -25,7 +56,7 @@ class GeminiProvider(LLMProvider):
             system_prompt: Optional system prompt to guide the model's behavior
             
         Returns:
-            str: Generated response
+            str: Generated response as formatted JSON
         """
         # Combine system prompt and user prompts
         combined_prompt = ""
@@ -36,6 +67,12 @@ class GeminiProvider(LLMProvider):
         
         try:
             response = await self.model.generate_content_async(combined_prompt)
-            return response.text
+            prompts = self._format_response(response.text)
+            
+            # Format as a clean numbered list
+            formatted_response = "\n".join(f"{i}. {prompt}" for i, prompt in enumerate(prompts, 1))
+            
+            return formatted_response
+            
         except Exception as e:
             raise Exception(f"Error generating response from Gemini: {str(e)}")

@@ -41,6 +41,18 @@ class GenerationService:
         raw_response = await self.llm_provider.generate([system_prompt], None)
         
         # Filter response
+
         filtered_response = self.response_filter.filter_response(raw_response)
         
-        return filtered_response
+        prompts = [
+            line.strip().lstrip("0123456789. ").strip()
+            for line in filtered_response.split("\n")
+            if line.strip()
+        ]
+        
+        # return prompts
+        print(prompts)
+
+        # print(filtered_response)
+    
+        return prompts
