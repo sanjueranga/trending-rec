@@ -9,13 +9,13 @@ python3 -m venv venv
 ### 2. Activate the Virtual Environment
 
 - **On Linux/macOS:**
-    ```bash
-    source venv/bin/activate
-    ```
+  ```bash
+  source venv/bin/activate
+  ```
 - **On Windows:**
-    ```bash
-    venv\Scripts\activate
-    ```
+  ```bash
+  venv\Scripts\activate
+  ```
 
 ### 3. Install Requirements
 
@@ -25,6 +25,8 @@ pip install -r requirements.txt
 
 ### 4. Run the Application
 
+in /backend/
+
 ```bash
-python app.py
+uvicorn app.main:app --reload
 ```

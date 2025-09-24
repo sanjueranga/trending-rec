@@ -188,3 +188,22 @@ button,
     border-color var(--theme-transition-duration) var(--theme-transition-easing),
     box-shadow var(--theme-transition-duration) var(--theme-transition-easing);
 }
+
+/* Toast dark mode support for react-hot-toast */
+.dark [data-hot-toast] {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+
+.dark [data-hot-toast] .Toastify__toast--success {
+  background: #0f2419 !important;
+  color: #86efac !important;
+  border: 1px solid #16a34a !important;
+}
+
+.dark [data-hot-toast] .Toastify__toast--error {
+  background: #2d1b1b !important;
+  color: #fca5a5 !important;
+  border: 1px solid #dc2626 !important;
+}
