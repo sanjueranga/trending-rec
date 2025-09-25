@@ -200,144 +200,158 @@ export default function PromptForm() {
     };
 
     return (
-        <Card className="max-w-2xl mx-auto p-6 space-y-6">
-            <CardHeader>
-                <h2 className="text-xl font-bold">Configure Your Prompt</h2>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {/* Topic */}
-                <div className="space-y-2">
-                    <Label htmlFor="topic">Topic</Label>
-                    <AutocompleteInput
-                        id="topic"
-                        value={topic}
-                        onChange={setTopic}
-                        onSelect={handleTopicSelect}
-                        options={suggestions}
-                        loading={loading}
-                        placeholder="e.g. Education, Technology, Business"
-                    />
-                </div>
-
-                {/* Intention */}
-                <div className="space-y-2">
-                    <Label htmlFor="intention">Intention</Label>
-                    <Select value={intention} onValueChange={setIntention}>
-                        <SelectTrigger id="intention">
-                            <SelectValue placeholder="Select an intention" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="video">Video Creation</SelectItem>
-                            <SelectItem value="app">Application Development</SelectItem>
-                            <SelectItem value="learning">Learning</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Theme */}
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="theme">Theme</Label>
-                        <div className="flex items-center gap-2">
-                            <Switch
-                                checked={autoTheme}
-                                disabled={topic.trim() === "" || isFetchingTrendingTheme}
-                                onCheckedChange={async (checked) => {
-                                    if (checked) {
-                                        // Validate that both topic and intention are filled
-                                        if (!topic.trim()) {
-                                            toast.error("Please enter a topic first.");
-                                            return;
-                                        }
-                                        if (!intention) {
-                                            toast.error("Please select an intention first.");
-                                            return;
-                                        }
-
-                                        // Fetch trending theme from backend
-                                        const fetchedTheme = await fetchTrendingTheme(topic, intention);
-                                        if (fetchedTheme) {
-                                            setAutoTheme(true);
-                                        }
-                                    } else {
-                                        setAutoTheme(false);
-                                        setTrendingTheme("");
-                                        toast("Auto theme disabled - please specify a custom theme below.", {
-                                            duration: 2000,
-                                            icon: '🎨'
-                                        });
-                                    }
-                                }}
-                            />
-                            <span className="text-sm">Auto Trending Theme</span>
-                        </div>
+        <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] px-4 py-6 lg:px-8">
+            <Card className="w-full max-w-2xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <CardHeader className="pb-4 sm:pb-6">
+                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-center sm:text-left text-black dark:text-white">Configure Your Prompt</h2>
+                </CardHeader>
+                <CardContent className="space-y-4 sm:space-y-6">
+                    {/* Topic */}
+                    <div className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="topic" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">Topic</Label>
+                        <AutocompleteInput
+                            id="topic"
+                            value={topic}
+                            onChange={setTopic}
+                            onSelect={handleTopicSelect}
+                            options={suggestions}
+                            loading={loading}
+                            placeholder="e.g. Education, Technology, Business"
+                            className="text-sm sm:text-base bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white"
+                        />
                     </div>
-                    <Input
-                        id="theme"
-                        placeholder="Enter theme (if not auto)"
-                        disabled={autoTheme || isFetchingTrendingTheme}
-                        value={autoTheme ? trendingTheme : theme}
-                        onChange={(e) => setTheme(e.target.value)}
-                        className={autoTheme ? "bg-gray-50 dark:bg-gray-800" : ""}
-                    />
-                </div>
 
-                {/* Brand Instructions */}
-                <div className="space-y-2">
-                    <Label htmlFor="instructions">Brand Instructions</Label>
-                    <Textarea
-                        id="instructions"
-                        placeholder="Enter any brand identity/system instructions"
-                        value={instructions}
-                        onChange={(e) => setInstructions(e.target.value)}
-                    />
-                </div>
-
-                {/* Generate Button */}
-                <div className="pt-4">
-                    <Button
-                        className="w-full"
-                        onClick={handleGeneratePrompts}
-                        disabled={isGenerating || !isFormValid()}
-                    >
-                        {isGenerating ? "Generating..." : "Generate Prompts"}
-                    </Button>
-                </div>
-
-                {/* Generated Prompts Display */}
-                {generatedPrompts.length > 0 && (
-                    <div className="pt-6 space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-semibold">Generated Prompts</h3>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={clearGeneratedPrompts}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
-                            >
-                                Clear All
-                            </Button>
-                        </div>
-                        {generatedPrompts.map((prompt) => (
-                            <Card key={prompt.id} className="p-4">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-medium">{prompt.title}</h4>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => copyToClipboard(prompt.content, prompt.title)}
-                                    >
-                                        Copy
-                                    </Button>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    {prompt.content}
-                                </p>
-                            </Card>
-                        ))}
+                    {/* Intention */}
+                    <div className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="intention" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">Intention</Label>
+                        <Select value={intention} onValueChange={setIntention}>
+                            <SelectTrigger id="intention">
+                                <SelectValue placeholder="Select an intention" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="video">Video Creation</SelectItem>
+                                <SelectItem value="app">Application Development</SelectItem>
+                                <SelectItem value="learning">Learning</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                )}
-            </CardContent>
-        </Card>
+
+                    {/* Theme */}
+                    <div className="space-y-2 sm:space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                            <Label htmlFor="theme" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">Theme</Label>
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <Switch
+                                    checked={autoTheme}
+                                    disabled={topic.trim() === "" || isFetchingTrendingTheme}
+                                    onCheckedChange={async (checked) => {
+                                        if (checked) {
+                                            // Validate that both topic and intention are filled
+                                            if (!topic.trim()) {
+                                                toast.error("Please enter a topic first.");
+                                                return;
+                                            }
+                                            if (!intention) {
+                                                toast.error("Please select an intention first.");
+                                                return;
+                                            }
+
+                                            // Fetch trending theme from backend
+                                            const fetchedTheme = await fetchTrendingTheme(topic, intention);
+                                            if (fetchedTheme) {
+                                                setAutoTheme(true);
+                                            }
+                                        } else {
+                                            setAutoTheme(false);
+                                            setTrendingTheme("");
+                                            toast("Auto theme disabled - please specify a custom theme below.", {
+                                                duration: 2000,
+                                                icon: '🎨'
+                                            });
+                                        }
+                                    }}
+                                />
+                                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                    <span className="hidden sm:inline">Auto Trending Theme</span>
+                                    <span className="sm:hidden">Auto Theme</span>
+                                </span>
+                            </div>
+                        </div>
+                        <Input
+                            id="theme"
+                            placeholder={autoTheme ? "Trending theme will appear here..." : "Enter theme (if not auto)"}
+                            disabled={autoTheme || isFetchingTrendingTheme}
+                            value={autoTheme ? trendingTheme : theme}
+                            onChange={(e) => setTheme(e.target.value)}
+                            className={`text-sm sm:text-base ${autoTheme
+                                ? "bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600"
+                                : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600"
+                                }`}
+                        />
+                    </div>
+
+                    {/* Brand Instructions */}
+                    <div className="space-y-2 sm:space-y-3">
+                        <Label htmlFor="instructions" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">Brand Instructions</Label>
+                        <Textarea
+                            id="instructions"
+                            placeholder="Enter any brand identity/system instructions"
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
+                            className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                            rows={3}
+                        />
+                    </div>
+
+                    {/* Generate Button */}
+                    <div className="pt-4 sm:pt-6">
+                        <Button
+                            className="w-full h-12 sm:h-14 text-sm sm:text-base font-medium bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black border-black dark:border-white"
+                            onClick={handleGeneratePrompts}
+                            disabled={isGenerating || !isFormValid()}
+                        >
+                            {isGenerating ? "Generating..." : "Generate Prompts"}
+                        </Button>
+                    </div>
+
+                    {/* Generated Prompts Display */}
+                    {generatedPrompts.length > 0 && (
+                        <div className="pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
+                                <h3 className="text-base sm:text-lg font-semibold text-black dark:text-white">Generated Prompts</h3>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearGeneratedPrompts}
+                                    className="text-black hover:text-gray-700 hover:bg-gray-100 dark:text-white dark:hover:text-gray-300 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 self-start sm:self-auto"
+                                >
+                                    <span className="hidden sm:inline">Clear All</span>
+                                    <span className="sm:hidden">Clear</span>
+                                </Button>
+                            </div>
+                            {generatedPrompts.map((prompt) => (
+                                <Card key={prompt.id} className="p-3 sm:p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
+                                        <h4 className="font-medium text-sm sm:text-base flex-1 text-black dark:text-white">{prompt.title}</h4>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => copyToClipboard(prompt.content, prompt.title)}
+                                            className="self-start sm:self-auto shrink-0 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600 text-black dark:text-white"
+                                        >
+                                            <span className="hidden sm:inline">Copy</span>
+                                            <span className="sm:hidden">📋</span>
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed sm:leading-loose break-words hyphens-auto">
+                                        {prompt.content}
+                                    </p>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
 }
