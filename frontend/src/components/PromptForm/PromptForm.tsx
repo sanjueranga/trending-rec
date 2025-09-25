@@ -26,6 +26,8 @@ export default function PromptForm() {
     const [instructions, setInstructions] = useState("");
     const [generatedPrompts, setGeneratedPrompts] = useState<GeneratedPrompt[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isFetchingTrendingTheme, setIsFetchingTrendingTheme] = useState(false);
+    const [trendingTheme, setTrendingTheme] = useState("");
 
     // Use hooks
     const { suggestions, loading } = useTopicSuggestions(topic);
@@ -38,6 +40,82 @@ export default function PromptForm() {
         console.log("Selected topic:", option);
     };
 
+    const fetchTrendingTheme = async (topicValue: string, intentionValue: string) => {
+        if (!topicValue.trim() || !intentionValue) {
+            toast.error("Please select both topic and intention before enabling auto trending theme.");
+            return null;
+        }
+
+        setIsFetchingTrendingTheme(true);
+        toast.loading("Fetching trending themes...", { duration: 1500 });
+
+        try {
+            // Mock API delay (1-2 seconds to simulate real API)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Mock trending themes based on topic and intention
+            const mockTrendingThemes: Record<string, Record<string, string[]>> = {
+                technology: {
+                    video: ["AI & Machine Learning Revolution", "Cybersecurity in 2024", "Sustainable Tech Innovation"],
+                    app: ["Cross-Platform Development", "AI-Powered User Experience", "Cloud-Native Architecture"],
+                    learning: ["Interactive Coding Tutorials", "Tech Career Roadmaps", "Open Source Contributions"]
+                },
+                education: {
+                    video: ["Personalized Learning Paths", "Educational Technology Integration", "Student Engagement Strategies"],
+                    app: ["Gamified Learning Platforms", "Virtual Classroom Solutions", "Assessment & Analytics Tools"],
+                    learning: ["Microlearning Techniques", "Collaborative Study Methods", "Skills-Based Education"]
+                },
+                business: {
+                    video: ["Digital Transformation Stories", "Leadership in Remote Work", "Sustainable Business Practices"],
+                    app: ["Business Intelligence Dashboards", "Customer Experience Optimization", "Workflow Automation"],
+                    learning: ["Strategic Thinking Frameworks", "Data-Driven Decision Making", "Innovation Management"]
+                },
+                marketing: {
+                    video: ["Influencer Marketing Trends", "Content Marketing Strategy", "Brand Storytelling"],
+                    app: ["Marketing Automation Tools", "Customer Journey Mapping", "Social Media Management"],
+                    learning: ["Digital Marketing Mastery", "Analytics & Performance", "Creative Campaign Development"]
+                },
+                health: {
+                    video: ["Wellness & Mental Health", "Fitness Technology Integration", "Preventive Healthcare"],
+                    app: ["Telemedicine Solutions", "Health Tracking Apps", "Medical Data Management"],
+                    learning: ["Health Literacy Programs", "Medical Research Updates", "Nutrition & Lifestyle"]
+                }
+            };
+
+            // Get trending theme based on topic and intention
+            const topicKey = topicValue.toLowerCase();
+            let selectedTheme = "Innovative Approaches in Modern Context";
+
+            // Find matching theme or use fallback
+            if (mockTrendingThemes[topicKey] && mockTrendingThemes[topicKey][intentionValue]) {
+                const themes = mockTrendingThemes[topicKey][intentionValue];
+                selectedTheme = themes[Math.floor(Math.random() * themes.length)];
+            } else {
+                // Fallback themes based on intention only
+                const fallbackThemes = {
+                    video: ["Visual Storytelling Excellence", "Engaging Content Creation", "Audience-First Approach"],
+                    app: ["User-Centric Design", "Performance Optimization", "Scalable Solutions"],
+                    learning: ["Interactive Learning Experience", "Knowledge Retention Strategies", "Skill Development Focus"]
+                };
+                const fallback = fallbackThemes[intentionValue as keyof typeof fallbackThemes];
+                if (fallback) {
+                    selectedTheme = fallback[Math.floor(Math.random() * fallback.length)];
+                }
+            }
+
+            setTrendingTheme(selectedTheme);
+            toast.success(`Found trending theme: "${selectedTheme}"`, { duration: 3000 });
+
+            return selectedTheme;
+        } catch (error) {
+            console.error("Error fetching trending theme:", error);
+            toast.error("Unable to fetch trending themes. Please try again or use manual theme.");
+            return null;
+        } finally {
+            setIsFetchingTrendingTheme(false);
+        }
+    };
+
     // Mock function to simulate API call
     const mockFetchPrompts = async (): Promise<GeneratedPrompt[]> => {
         // Simulate API delay
@@ -47,12 +125,12 @@ export default function PromptForm() {
             {
                 id: "1",
                 title: "Creative Prompt 1",
-                content: `Create engaging ${intention || 'content'} about ${topic || 'your topic'} with a focus on ${autoTheme ? 'trending themes' : theme || 'custom styling'}. ${instructions ? `Brand guidelines: ${instructions}` : 'Follow best practices for audience engagement.'}`
+                content: `Create engaging ${intention || 'content'} about ${topic || 'your topic'} with a focus on ${autoTheme ? trendingTheme : theme || 'custom styling'}. ${instructions ? `Brand guidelines: ${instructions}` : 'Follow best practices for audience engagement.'}`
             },
             {
                 id: "2",
                 title: "Strategic Prompt 2",
-                content: `Design compelling ${intention || 'content'} that explores ${topic || 'your chosen subject'} using ${autoTheme ? 'current trending approaches' : theme || 'your specified theme'}. ${instructions ? `Incorporate brand identity: ${instructions}` : 'Ensure content aligns with target audience expectations.'}`
+                content: `Design compelling ${intention || 'content'} that explores ${topic || 'your chosen subject'} using ${autoTheme ? trendingTheme : theme || 'your specified theme'}. ${instructions ? `Incorporate brand identity: ${instructions}` : 'Ensure content aligns with target audience expectations.'}`
             }
         ];
 
@@ -69,8 +147,9 @@ export default function PromptForm() {
         const formData = {
             topic,
             intention,
-            theme: autoTheme ? "Auto Trending Theme" : theme,
+            theme: autoTheme ? trendingTheme : theme,
             autoTheme,
+            trendingTheme: autoTheme ? trendingTheme : null,
             instructions
         };
 
@@ -108,7 +187,7 @@ export default function PromptForm() {
     const isFormValid = () => {
         const isTopicFilled = topic.trim() !== "";
         const isIntentionFilled = intention !== "";
-        const isThemeFilled = autoTheme || theme.trim() !== "";
+        const isThemeFilled = autoTheme ? trendingTheme.trim() !== "" : theme.trim() !== "";
 
         return isTopicFilled && isIntentionFilled && isThemeFilled;
     };
@@ -162,15 +241,32 @@ export default function PromptForm() {
                         <div className="flex items-center gap-2">
                             <Switch
                                 checked={autoTheme}
-                                onCheckedChange={(checked) => {
-                                    setAutoTheme(checked);
-                                    const message = checked
-                                        ? "Auto theme enabled - we'll use trending themes for your prompts."
-                                        : "Auto theme disabled - please specify a custom theme below.";
-                                    toast(message, {
-                                        duration: 2000,
-                                        icon: checked ? '✨' : '🎨'
-                                    });
+                                disabled={topic.trim() === "" || isFetchingTrendingTheme}
+                                onCheckedChange={async (checked) => {
+                                    if (checked) {
+                                        // Validate that both topic and intention are filled
+                                        if (!topic.trim()) {
+                                            toast.error("Please enter a topic first.");
+                                            return;
+                                        }
+                                        if (!intention) {
+                                            toast.error("Please select an intention first.");
+                                            return;
+                                        }
+
+                                        // Fetch trending theme from backend
+                                        const fetchedTheme = await fetchTrendingTheme(topic, intention);
+                                        if (fetchedTheme) {
+                                            setAutoTheme(true);
+                                        }
+                                    } else {
+                                        setAutoTheme(false);
+                                        setTrendingTheme("");
+                                        toast("Auto theme disabled - please specify a custom theme below.", {
+                                            duration: 2000,
+                                            icon: '🎨'
+                                        });
+                                    }
                                 }}
                             />
                             <span className="text-sm">Auto Trending Theme</span>
@@ -179,9 +275,10 @@ export default function PromptForm() {
                     <Input
                         id="theme"
                         placeholder="Enter theme (if not auto)"
-                        disabled={autoTheme}
-                        value={theme}
+                        disabled={autoTheme || isFetchingTrendingTheme}
+                        value={autoTheme ? trendingTheme : theme}
                         onChange={(e) => setTheme(e.target.value)}
+                        className={autoTheme ? "bg-gray-50 dark:bg-gray-800" : ""}
                     />
                 </div>
 
