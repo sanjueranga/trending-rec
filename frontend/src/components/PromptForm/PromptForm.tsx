@@ -491,8 +491,8 @@ export default function PromptForm() {
                             </div>
                         )}
                     </CardContent>
-                </Card>
-            </div>
+                </Card >
+            </div >
         </>
     );
 }
