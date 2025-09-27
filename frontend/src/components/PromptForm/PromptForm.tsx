@@ -118,16 +118,28 @@ export default function PromptForm() {
 
     // Real API call to generate prompts
     const fetchPrompts = async (): Promise<GeneratedPrompt[]> => {
-        const finalTheme = autoTheme ? trendingTheme : theme;
-        const themeWithInstructions = instructions
-            ? `${finalTheme}. Brand guidelines: ${instructions}`
-            : finalTheme;
+        // Original logic (commented out for now)
+        // const finalTheme = autoTheme ? trendingTheme : theme;
+        // const themeWithInstructions = instructions
+        //     ? `${finalTheme}. Brand guidelines: ${instructions}`
+        //     : finalTheme;
 
-        const promptTexts = await generatePrompts({
-            topic,
-            intention,
-            theme: themeWithInstructions
-        });
+        // const promptTexts = await generatePrompts({
+        //     topic,
+        //     intention,
+        //     theme: themeWithInstructions
+        // });
+
+        // New simplified request format
+        const requestBody = {
+            topic: topic,
+            intention: intention,
+            theme: autoTheme ? trendingTheme : theme
+        };
+
+        console.log("Sending request body:", JSON.stringify(requestBody, null, 2));
+
+        const promptTexts = await generatePrompts(requestBody);
 
         // Convert backend response to frontend format
         return promptTexts.map((content, index) => ({
