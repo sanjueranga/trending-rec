@@ -10,11 +10,11 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AutocompleteInput, type AutocompleteOption } from "@/components/ui/autocomplete-input";
 import { useTopicSuggestions } from "@/hooks/useTopicSuggestions";
+import { generatePrompts, ApiError } from "@/lib/api/generation";
 import toast from "react-hot-toast";
 
 type GeneratedPrompt = {
     id: string;
-    title: string;
     content: string;
 };
 
@@ -116,25 +116,24 @@ export default function PromptForm() {
         }
     };
 
-    // Mock function to simulate API call
-    const mockFetchPrompts = async (): Promise<GeneratedPrompt[]> => {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+    // Real API call to generate prompts
+    const fetchPrompts = async (): Promise<GeneratedPrompt[]> => {
+        const finalTheme = autoTheme ? trendingTheme : theme;
+        const themeWithInstructions = instructions
+            ? `${finalTheme}. Brand guidelines: ${instructions}`
+            : finalTheme;
 
-        const mockPrompts: GeneratedPrompt[] = [
-            {
-                id: "1",
-                title: "Creative Prompt 1",
-                content: `Create engaging ${intention || 'content'} about ${topic || 'your topic'} with a focus on ${autoTheme ? trendingTheme : theme || 'custom styling'}. ${instructions ? `Brand guidelines: ${instructions}` : 'Follow best practices for audience engagement.'}`
-            },
-            {
-                id: "2",
-                title: "Strategic Prompt 2",
-                content: `Design compelling ${intention || 'content'} that explores ${topic || 'your chosen subject'} using ${autoTheme ? trendingTheme : theme || 'your specified theme'}. ${instructions ? `Incorporate brand identity: ${instructions}` : 'Ensure content aligns with target audience expectations.'}`
-            }
-        ];
+        const promptTexts = await generatePrompts({
+            topic,
+            intention,
+            theme: themeWithInstructions
+        });
 
-        return mockPrompts;
+        // Convert backend response to frontend format
+        return promptTexts.map((content, index) => ({
+            id: `prompt-${Date.now()}-${index}`,
+            content: content.trim()
+        }));
     };
 
     const handleGeneratePrompts = async () => {
@@ -156,17 +155,28 @@ export default function PromptForm() {
         console.log("Form Data:", JSON.stringify(formData, null, 2));
 
         setIsGenerating(true);
-        toast.loading("Please wait while we create your custom prompts...", {
-            duration: 2000
-        });
+        const loadingToast = toast.loading("Please wait while we create your custom prompts...");
 
         try {
-            const prompts = await mockFetchPrompts();
+            const prompts = await fetchPrompts();
             setGeneratedPrompts(prompts);
+            toast.dismiss(loadingToast);
             toast.success(`Generated ${prompts.length} custom prompts for your ${intention} project.`);
         } catch (error) {
             console.error("Error generating prompts:", error);
-            toast.error("Sorry, we couldn't generate prompts right now. Please try again.");
+            toast.dismiss(loadingToast);
+
+            if (error instanceof ApiError) {
+                if (error.statusCode === 0) {
+                    toast.error("Cannot connect to server. Please check if the backend is running.");
+                } else if (error.statusCode === 400) {
+                    toast.error(`Invalid input: ${error.message}`);
+                } else {
+                    toast.error(error.message || "Failed to generate prompts. Please try again.");
+                }
+            } else {
+                toast.error("An unexpected error occurred. Please try again.");
+            }
         } finally {
             setIsGenerating(false);
         }
@@ -329,14 +339,14 @@ export default function PromptForm() {
                                     <span className="sm:hidden">Clear</span>
                                 </Button>
                             </div>
-                            {generatedPrompts.map((prompt) => (
+                            {generatedPrompts.map((prompt, index) => (
                                 <Card key={prompt.id} className="p-3 sm:p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
                                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
-                                        <h4 className="font-medium text-sm sm:text-base flex-1 text-black dark:text-white">{prompt.title}</h4>
+                                        <h4 className="font-medium text-sm sm:text-base flex-1 text-black dark:text-white">Prompt {index + 1}</h4>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => copyToClipboard(prompt.content, prompt.title)}
+                                            onClick={() => copyToClipboard(prompt.content, `Prompt ${index + 1}`)}
                                             className="self-start sm:self-auto shrink-0 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600 text-black dark:text-white"
                                         >
                                             <span className="hidden sm:inline">Copy</span>
