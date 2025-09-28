@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 const N8N_URL = process.env.NEXT_PUBLIC_N8N_URL || "";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,173 @@ type GeneratedPrompt = {
     content: string;
 };
 
-export default function PromptForm() {
+type TechQuote = {
+    quote: string;
+    author: string;
+    company?: string;
+};
 
-    // ...existing code...
+const TECH_QUOTES: TechQuote[] = [
+    {
+        quote: "The best way to predict the future is to invent it.",
+        author: "Alan Kay",
+        company: "Xerox PARC"
+    },
+    {
+        quote: "Innovation distinguishes between a leader and a follower.",
+        author: "Steve Jobs",
+        company: "Apple"
+    },
+    {
+        quote: "Your most unhappy customers are your greatest source of learning.",
+        author: "Bill Gates",
+        company: "Microsoft"
+    },
+    {
+        quote: "Move fast and break things. Unless you are breaking stuff, you are not moving fast enough.",
+        author: "Mark Zuckerberg",
+        company: "Meta"
+    },
+    {
+        quote: "The biggest risk is not taking any risk... In a world that's changing quickly, the only strategy that is guaranteed to fail is not taking risks.",
+        author: "Mark Zuckerberg",
+        company: "Meta"
+    },
+    {
+        quote: "If you're not embarrassed by the first version of your product, you've launched too late.",
+        author: "Reid Hoffman",
+        company: "LinkedIn"
+    },
+    {
+        quote: "Focus on the user and all else will follow.",
+        author: "Larry Page",
+        company: "Google"
+    },
+    {
+        quote: "It's better to be wrong than to be vague.",
+        author: "Freeman Dyson"
+    },
+    {
+        quote: "The way to get started is to quit talking and begin doing.",
+        author: "Walt Disney"
+    },
+    {
+        quote: "Don't be afraid to give up the good to go for the great.",
+        author: "John D. Rockefeller"
+    },
+    {
+        quote: "Failure is simply the opportunity to begin again, this time more intelligently.",
+        author: "Henry Ford"
+    },
+    {
+        quote: "Code is like humor. When you have to explain it, it's bad.",
+        author: "Cory House"
+    },
+    {
+        quote: "Measuring programming progress by lines of code is like measuring aircraft building progress by weight.",
+        author: "Bill Gates",
+        company: "Microsoft"
+    },
+    {
+        quote: "The best error message is the one that never shows up.",
+        author: "Thomas Fuchs"
+    },
+    {
+        quote: "Simplicity is the ultimate sophistication.",
+        author: "Leonardo da Vinci"
+    }
+];
+
+// Loading Popup Component
+const ThemeGeneratingPopup = ({ isVisible, onClose, canClose }: { isVisible: boolean; onClose: () => void; canClose: boolean }) => {
+    const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+    const [fadeClass, setFadeClass] = useState("opacity-100");
+
+    useEffect(() => {
+        if (!isVisible) return;
+
+        const interval = setInterval(() => {
+            setFadeClass("opacity-0");
+            setTimeout(() => {
+                setCurrentQuoteIndex((prev) => (prev + 1) % TECH_QUOTES.length);
+                setFadeClass("opacity-100");
+            }, 300);
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [isVisible]);
+
+    if (!isVisible) return null;
+
+    const currentQuote = TECH_QUOTES[currentQuoteIndex];
+
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-100 dark:bg-[#18181b] rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-gray-300 dark:border-gray-700">
+                {/* Header */}
+                <div className="bg-gray-900 dark:bg-gray-800 p-6 text-white">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold">Generating Your Theme</h3>
+                        <button
+                            onClick={canClose ? onClose : undefined}
+                            className={`transition-colors p-1 rounded ${canClose ? "text-white/80 hover:text-white cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
+                            disabled={!canClose}
+                            aria-label="Close popup"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-8">
+                    {/* Loading Animation */}
+                    <div className="flex justify-center mb-8">
+                        <div className="relative">
+                            <div className="w-16 h-16 border-4 border-blue-400 dark:border-gray-700 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400"></div>
+                            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-purple-400"></div>
+                        </div>
+                    </div>
+
+                    {/* Status Text */}
+                    <div className="text-center mb-8">
+                        <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                            Analyzing Trending Topics...
+                        </p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                            We&apos;re fetching the latest trends to create the perfect theme for your content
+                        </p>
+                    </div>
+
+                    {/* Quote Section */}
+                    <div className="bg-white dark:bg-gray-900 rounded-lg p-6 border-l-4 border-blue-600 dark:border-blue-400">
+                        <div className={`transition-opacity duration-300 ${fadeClass}`}>
+                            <blockquote className="text-gray-800 dark:text-gray-200 italic text-center mb-4 text-lg leading-relaxed">
+                                &quot;{currentQuote.quote}&quot;
+                            </blockquote>
+                            <div className="text-center">
+                                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                    — {currentQuote.author}
+                                </p>
+                                {currentQuote.company && (
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                                        {currentQuote.company}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default function PromptForm() {
+    // ...existing state...
     const [topic, setTopic] = useState("");
     const [autoTheme, setAutoTheme] = useState(false);
     const [intention, setIntention] = useState("");
@@ -31,6 +195,7 @@ export default function PromptForm() {
     const [isFetchingTrendingTheme, setIsFetchingTrendingTheme] = useState(false);
     const [n8nLoading, setN8nLoading] = useState(false);
     const [trendingTheme, setTrendingTheme] = useState("");
+    const [showThemePopup, setShowThemePopup] = useState(false);
 
     // Use hooks
     const { suggestions, loading } = useTopicSuggestions(topic);
@@ -43,25 +208,47 @@ export default function PromptForm() {
         console.log("Selected topic:", option);
     };
 
-    // Fetch trending theme/content from n8n workflow
+    // Enhanced fetch trending theme with popup
     const fetchTrendingTheme = async (topicValue: string, intentionValue: string) => {
         if (!topicValue.trim() || !intentionValue) {
             toast.error("Please select both topic and intention before enabling auto trending theme.");
             return null;
         }
+
         setIsFetchingTrendingTheme(true);
         setN8nLoading(true);
+        setShowThemePopup(true);
+
         try {
             const url = `${N8N_URL}?topic=${encodeURIComponent(topicValue)}&intention=${encodeURIComponent(intentionValue)}`;
             const res = await fetch(url, { method: "GET" });
             if (!res.ok) throw new Error("n8n workflow error");
             const data = await res.json();
+
+            // Add a small delay to show the completion animation
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
             if (typeof data.theme === "string") setTrendingTheme(data.theme);
             if (typeof data.content === "string") setContent(data.content);
-            toast.success("Trending theme and content loaded from n8n!", { duration: 2000 });
+
+            setShowThemePopup(false);
+            toast.success("Trending theme and content loaded successfully! 🚀", {
+                duration: 3000,
+                style: {
+                    background: '#10B981',
+                    color: 'white',
+                }
+            });
             return data.theme;
         } catch {
-            toast.error("Unable to fetch from n8n. Please try again or use manual theme.");
+            setShowThemePopup(false);
+            toast.error("Unable to fetch trending theme. Please try again or use manual theme.", {
+                duration: 4000,
+                style: {
+                    background: '#EF4444',
+                    color: 'white',
+                }
+            });
             setTrendingTheme("");
             setContent("");
             return null;
@@ -73,7 +260,6 @@ export default function PromptForm() {
 
     // Real API call to generate prompts
     const fetchPrompts = async (): Promise<GeneratedPrompt[]> => {
-        // Send all form data including theme and content
         const requestBody = {
             topic: topic,
             intention: intention,
@@ -86,12 +272,10 @@ export default function PromptForm() {
     };
 
     const handleGeneratePrompts = async () => {
-        // Validate form before proceeding
         if (!isFormValid()) {
             toast.error("Please fill in all required fields (Topic, Intention, and Theme).");
             return;
         }
-
 
         const formData = {
             topic,
@@ -112,7 +296,6 @@ export default function PromptForm() {
         } catch (error) {
             console.error("Error generating prompts:", error);
             toast.dismiss(loadingToast);
-
             if (error instanceof ApiError) {
                 if (error.statusCode === 0) {
                     toast.error("Cannot connect to server. Please check if the backend is running.");
@@ -158,6 +341,17 @@ export default function PromptForm() {
 
     return (
         <>
+            <ThemeGeneratingPopup
+                isVisible={showThemePopup}
+                onClose={() => {
+                    setShowThemePopup(false);
+                    setIsFetchingTrendingTheme(false);
+                    setN8nLoading(false);
+                    setAutoTheme(false);
+                }}
+                canClose={!isFetchingTrendingTheme && !n8nLoading}
+            />
+
             <div className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] px-4 py-6 lg:px-8">
                 <Card className="w-full max-w-2xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
                     <CardHeader className="pb-4 sm:pb-6">
@@ -244,7 +438,6 @@ export default function PromptForm() {
                                 rows={2}
                             />
                         </div>
-
 
                         {/* Generate Button */}
                         <div className="pt-4 sm:pt-6">
