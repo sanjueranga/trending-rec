@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 const N8N_URL = process.env.NEXT_PUBLIC_N8N_URL || "";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -60,7 +59,7 @@ export default function PromptForm() {
             if (typeof data.content === "string") setContent(data.content);
             toast.success("Trending theme and content loaded from n8n!", { duration: 2000 });
             return data.theme;
-        } catch (error) {
+        } catch {
             toast.error("Unable to fetch from n8n. Please try again or use manual theme.");
             setTrendingTheme("");
             setContent("");
@@ -256,12 +255,13 @@ export default function PromptForm() {
                                 }`}
                             rows={2}
                         />
-                        {autoTheme && (
+                        {/* Only show content textarea if NOT autoTheme */}
+                        {!autoTheme && (
                             <div className="pt-2">
                                 <Label htmlFor="content" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Content</Label>
                                 <Textarea
                                     id="content"
-                                    placeholder="Content from n8n will appear here..."
+                                    placeholder="Enter content (optional)"
                                     value={content}
                                     onChange={e => setContent(e.target.value)}
                                     className="min-h-[60px] text-sm sm:text-base bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
