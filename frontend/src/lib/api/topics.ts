@@ -1,75 +1,15 @@
 const MOCK_TOPICS = [
-    // Technology
-    "Artificial Intelligence",
-    "Machine Learning",
-    "Web Development",
-    "Mobile App Development",
-    "Cybersecurity",
-    "Cloud Computing",
-    "Data Science",
-    "Blockchain",
-    "Internet of Things",
-    "Software Engineering",
-
-    // Business
-    "Digital Marketing",
-    "E-commerce",
-    "Entrepreneurship",
-    "Project Management",
-    "Leadership",
-    "Finance",
-    "Sales Strategy",
-    "Customer Service",
-    "Business Analytics",
-    "Supply Chain Management",
-
-    // Education
-    "Online Learning",
-    "Educational Technology",
-    "Curriculum Development",
-    "Student Engagement",
-    "Assessment Methods",
-    "STEM Education",
-    "Language Learning",
-    "Professional Development",
-    "Educational Psychology",
-    "Inclusive Education",
-
-    // Health & Wellness
-    "Mental Health",
-    "Fitness",
-    "Nutrition",
-    "Healthcare Technology",
-    "Wellness Programs",
-    "Medical Research",
-    "Public Health",
-    "Preventive Care",
-    "Telemedicine",
-    "Health Education",
-
-    // Creative & Arts
-    "Content Creation",
-    "Graphic Design",
-    "Photography",
-    "Video Production",
-    "Music Production",
-    "Creative Writing",
-    "Digital Art",
-    "Animation",
-    "Film Making",
-    "Brand Design",
-
-    // Science & Research
-    "Environmental Science",
-    "Climate Change",
-    "Renewable Energy",
-    "Space Exploration",
-    "Biotechnology",
-    "Chemistry",
-    "Physics",
-    "Biology",
-    "Psychology",
-    "Social Sciences"
+    "Fashion",
+    "Education",
+    "Technology",
+    "Business",
+    "Health",
+    "Entertainment",
+    "Art",
+    "Travel",
+    "Food",
+    "Science",
+    "Sports"
 ];
 
 export interface TopicSuggestion {
