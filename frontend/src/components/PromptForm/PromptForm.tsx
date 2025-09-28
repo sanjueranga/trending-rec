@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+const N8N_URL = process.env.NEXT_PUBLIC_N8N_URL || "";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -23,10 +24,11 @@ export default function PromptForm() {
     const [autoTheme, setAutoTheme] = useState(false);
     const [intention, setIntention] = useState("");
     const [theme, setTheme] = useState("");
-    const [instructions, setInstructions] = useState("");
+    const [content, setContent] = useState("");
     const [generatedPrompts, setGeneratedPrompts] = useState<GeneratedPrompt[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isFetchingTrendingTheme, setIsFetchingTrendingTheme] = useState(false);
+    const [n8nLoading, setN8nLoading] = useState(false);
     const [trendingTheme, setTrendingTheme] = useState("");
 
     // Use hooks
@@ -40,112 +42,48 @@ export default function PromptForm() {
         console.log("Selected topic:", option);
     };
 
+    // Fetch trending theme/content from n8n workflow
     const fetchTrendingTheme = async (topicValue: string, intentionValue: string) => {
         if (!topicValue.trim() || !intentionValue) {
             toast.error("Please select both topic and intention before enabling auto trending theme.");
             return null;
         }
-
         setIsFetchingTrendingTheme(true);
-        toast.loading("Fetching trending themes...", { duration: 1500 });
-
+        setN8nLoading(true);
+        const loadingToast = toast.loading("Contacting n8n for trending theme...", { duration: 3000 });
         try {
-            // Mock API delay (1-2 seconds to simulate real API)
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // Mock trending themes based on topic and intention
-            const mockTrendingThemes: Record<string, Record<string, string[]>> = {
-                technology: {
-                    video: ["AI & Machine Learning Revolution", "Cybersecurity in 2024", "Sustainable Tech Innovation"],
-                    app: ["Cross-Platform Development", "AI-Powered User Experience", "Cloud-Native Architecture"],
-                    learning: ["Interactive Coding Tutorials", "Tech Career Roadmaps", "Open Source Contributions"]
-                },
-                education: {
-                    video: ["Personalized Learning Paths", "Educational Technology Integration", "Student Engagement Strategies"],
-                    app: ["Gamified Learning Platforms", "Virtual Classroom Solutions", "Assessment & Analytics Tools"],
-                    learning: ["Microlearning Techniques", "Collaborative Study Methods", "Skills-Based Education"]
-                },
-                business: {
-                    video: ["Digital Transformation Stories", "Leadership in Remote Work", "Sustainable Business Practices"],
-                    app: ["Business Intelligence Dashboards", "Customer Experience Optimization", "Workflow Automation"],
-                    learning: ["Strategic Thinking Frameworks", "Data-Driven Decision Making", "Innovation Management"]
-                },
-                marketing: {
-                    video: ["Influencer Marketing Trends", "Content Marketing Strategy", "Brand Storytelling"],
-                    app: ["Marketing Automation Tools", "Customer Journey Mapping", "Social Media Management"],
-                    learning: ["Digital Marketing Mastery", "Analytics & Performance", "Creative Campaign Development"]
-                },
-                health: {
-                    video: ["Wellness & Mental Health", "Fitness Technology Integration", "Preventive Healthcare"],
-                    app: ["Telemedicine Solutions", "Health Tracking Apps", "Medical Data Management"],
-                    learning: ["Health Literacy Programs", "Medical Research Updates", "Nutrition & Lifestyle"]
-                }
-            };
-
-            // Get trending theme based on topic and intention
-            const topicKey = topicValue.toLowerCase();
-            let selectedTheme = "Innovative Approaches in Modern Context";
-
-            // Find matching theme or use fallback
-            if (mockTrendingThemes[topicKey] && mockTrendingThemes[topicKey][intentionValue]) {
-                const themes = mockTrendingThemes[topicKey][intentionValue];
-                selectedTheme = themes[Math.floor(Math.random() * themes.length)];
-            } else {
-                // Fallback themes based on intention only
-                const fallbackThemes = {
-                    video: ["Visual Storytelling Excellence", "Engaging Content Creation", "Audience-First Approach"],
-                    app: ["User-Centric Design", "Performance Optimization", "Scalable Solutions"],
-                    learning: ["Interactive Learning Experience", "Knowledge Retention Strategies", "Skill Development Focus"]
-                };
-                const fallback = fallbackThemes[intentionValue as keyof typeof fallbackThemes];
-                if (fallback) {
-                    selectedTheme = fallback[Math.floor(Math.random() * fallback.length)];
-                }
-            }
-
-            setTrendingTheme(selectedTheme);
-            toast.success(`Found trending theme: "${selectedTheme}"`, { duration: 3000 });
-
-            return selectedTheme;
+            const url = `${N8N_URL}?topic=${encodeURIComponent(topicValue)}&intention=${encodeURIComponent(intentionValue)}`;
+            const res = await fetch(url, { method: "GET" });
+            if (!res.ok) throw new Error("n8n workflow error");
+            const data = await res.json();
+            if (typeof data.theme === "string") setTrendingTheme(data.theme);
+            if (typeof data.content === "string") setContent(data.content);
+            toast.success("Trending theme and content loaded from n8n!", { duration: 2000 });
+            return data.theme;
         } catch (error) {
-            console.error("Error fetching trending theme:", error);
-            toast.error("Unable to fetch trending themes. Please try again or use manual theme.");
+            toast.error("Unable to fetch from n8n. Please try again or use manual theme.");
+            setTrendingTheme("");
+            setContent("");
             return null;
         } finally {
             setIsFetchingTrendingTheme(false);
+            setN8nLoading(false);
+            toast.dismiss(loadingToast);
         }
     };
 
     // Real API call to generate prompts
     const fetchPrompts = async (): Promise<GeneratedPrompt[]> => {
-        // Original logic (commented out for now)
-        // const finalTheme = autoTheme ? trendingTheme : theme;
-        // const themeWithInstructions = instructions
-        //     ? `${finalTheme}. Brand guidelines: ${instructions}`
-        //     : finalTheme;
-
-        // const promptTexts = await generatePrompts({
-        //     topic,
-        //     intention,
-        //     theme: themeWithInstructions
-        // });
-
-        // New simplified request format
+        // Send all form data including theme and content
         const requestBody = {
             topic: topic,
             intention: intention,
-            theme: autoTheme ? trendingTheme : theme
+            theme: autoTheme ? trendingTheme : theme,
+            content: content
         };
-
         console.log("Sending request body:", JSON.stringify(requestBody, null, 2));
-
         const promptTexts = await generatePrompts(requestBody);
-
-        // Convert backend response to frontend format
-        return promptTexts.map((content, index) => ({
-            id: `prompt-${Date.now()}-${index}`,
-            content: content.trim()
-        }));
+        return promptTexts.map((c, index) => ({ id: `prompt-${Date.now()}-${index}`, content: c.trim() }));
     };
 
     const handleGeneratePrompts = async () => {
@@ -155,15 +93,13 @@ export default function PromptForm() {
             return;
         }
 
+
         const formData = {
             topic,
             intention,
             theme: autoTheme ? trendingTheme : theme,
-            autoTheme,
-            trendingTheme: autoTheme ? trendingTheme : null,
-            instructions
+            content
         };
-
         console.log("Form Data:", JSON.stringify(formData, null, 2));
 
         setIsGenerating(true);
@@ -254,6 +190,16 @@ export default function PromptForm() {
                                 <SelectItem value="video">Video Creation</SelectItem>
                                 <SelectItem value="app">Application Development</SelectItem>
                                 <SelectItem value="learning">Learning</SelectItem>
+                                <SelectItem value="article">Article Writing</SelectItem>
+                                <SelectItem value="social">Social Media Post</SelectItem>
+                                <SelectItem value="podcast">Podcast Script</SelectItem>
+                                <SelectItem value="newsletter">Newsletter</SelectItem>
+                                <SelectItem value="review">Product Review</SelectItem>
+                                <SelectItem value="trend">Trend Analysis</SelectItem>
+                                <SelectItem value="presentation">Presentation</SelectItem>
+                                <SelectItem value="research">Research</SelectItem>
+                                <SelectItem value="case">Case Study</SelectItem>
+                                <SelectItem value="interview">Interview Preparation</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -265,10 +211,9 @@ export default function PromptForm() {
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <Switch
                                     checked={autoTheme}
-                                    disabled={topic.trim() === "" || isFetchingTrendingTheme}
+                                    disabled={topic.trim() === "" || isFetchingTrendingTheme || n8nLoading}
                                     onCheckedChange={async (checked) => {
                                         if (checked) {
-                                            // Validate that both topic and intention are filled
                                             if (!topic.trim()) {
                                                 toast.error("Please enter a topic first.");
                                                 return;
@@ -277,8 +222,7 @@ export default function PromptForm() {
                                                 toast.error("Please select an intention first.");
                                                 return;
                                             }
-
-                                            // Fetch trending theme from backend
+                                            // Fetch from n8n
                                             const fetchedTheme = await fetchTrendingTheme(topic, intention);
                                             if (fetchedTheme) {
                                                 setAutoTheme(true);
@@ -286,6 +230,7 @@ export default function PromptForm() {
                                         } else {
                                             setAutoTheme(false);
                                             setTrendingTheme("");
+                                            setContent("");
                                             toast("Auto theme disabled - please specify a custom theme below.", {
                                                 duration: 2000,
                                                 icon: '🎨'
@@ -299,31 +244,36 @@ export default function PromptForm() {
                                 </span>
                             </div>
                         </div>
-                        <Input
+                        <Textarea
                             id="theme"
                             placeholder={autoTheme ? "Trending theme will appear here..." : "Enter theme (if not auto)"}
-                            disabled={autoTheme || isFetchingTrendingTheme}
+                            disabled={autoTheme || isFetchingTrendingTheme || n8nLoading}
                             value={autoTheme ? trendingTheme : theme}
                             onChange={(e) => setTheme(e.target.value)}
-                            className={`text-sm sm:text-base ${autoTheme
+                            className={`text-sm sm:text-base min-h-[60px] ${autoTheme
                                 ? "bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600"
                                 : "bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600"
                                 }`}
+                            rows={2}
                         />
+                        {autoTheme && (
+                            <div className="pt-2">
+                                <Label htmlFor="content" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Content</Label>
+                                <Textarea
+                                    id="content"
+                                    placeholder="Content from n8n will appear here..."
+                                    value={content}
+                                    onChange={e => setContent(e.target.value)}
+                                    className="min-h-[60px] text-sm sm:text-base bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                    rows={2}
+                                    disabled={n8nLoading}
+                                />
+                                {n8nLoading && <div className="text-xs text-blue-500 mt-1">Loading from n8n...</div>}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Brand Instructions */}
-                    <div className="space-y-2 sm:space-y-3">
-                        <Label htmlFor="instructions" className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">Brand Instructions</Label>
-                        <Textarea
-                            id="instructions"
-                            placeholder="Enter any brand identity/system instructions"
-                            value={instructions}
-                            onChange={(e) => setInstructions(e.target.value)}
-                            className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                            rows={3}
-                        />
-                    </div>
+                    {/* Brand Instructions removed as per new requirements */}
 
                     {/* Generate Button */}
                     <div className="pt-4 sm:pt-6">

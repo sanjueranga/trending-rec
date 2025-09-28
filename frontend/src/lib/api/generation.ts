@@ -4,6 +4,7 @@ export interface GenerateRequest {
     topic: string;
     intention: string;
     theme: string;
+    content?: string;
 }
 
 export interface GenerateResponse {
