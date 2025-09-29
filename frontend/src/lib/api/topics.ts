@@ -33,7 +33,7 @@ export async function searchTopics(query: string): Promise<TopicSuggestion[]> {
         .map((topic, index) => ({
             id: `topic-${index}-${topic.replace(/\s+/g, '-').toLowerCase()}`,
             name: topic,
-            category: getCategoryForTopic(topic)
+            // category: getCategoryForTopic(topic)
         }));
 
     return filteredTopics;

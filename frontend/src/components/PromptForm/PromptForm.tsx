@@ -22,7 +22,6 @@ type GeneratedPrompt = {
 
 
 export default function PromptForm() {
-    // ...existing state...
     const [topic, setTopic] = useState("");
     const [autoTheme, setAutoTheme] = useState(false);
     const [intention, setIntention] = useState("");
@@ -46,7 +45,6 @@ export default function PromptForm() {
         console.log("Selected topic:", option);
     };
 
-    // Enhanced fetch trending theme with popup
     const fetchTrendingTheme = async (topicValue: string, intentionValue: string) => {
         if (!topicValue.trim() || !intentionValue) {
             toast.error("Please select both topic and intention before enabling auto trending theme.");
@@ -63,7 +61,6 @@ export default function PromptForm() {
             if (!res.ok) throw new Error("n8n workflow error");
             const data = await res.json();
 
-            // Add a small delay to show the completion animation
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             if (typeof data.theme === "string") setTrendingTheme(data.theme);
@@ -96,7 +93,6 @@ export default function PromptForm() {
         }
     };
 
-    // Real API call to generate prompts
     const fetchPrompts = async (): Promise<GeneratedPrompt[]> => {
         const requestBody = {
             topic: topic,
