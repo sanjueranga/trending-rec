@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.routers import generation
+from fastapi_limiter import FastAPILimiter
+from redis import asyncio as aioredis
 
 app = FastAPI(
     title="Trending Recommendations API",
@@ -11,6 +13,13 @@ app = FastAPI(
 
 # Include routers with /api prefix
 app.include_router(generation.router, prefix="/api", tags=["generation"])
+
+
+@app.on_event("startup")
+async def startup():
+    redis = await aioredis.from_url("redis://localhost", encoding="utf-8", decode_responses=True)
+    await FastAPILimiter.init(redis)
+
 
 @app.get("/")
 async def read_root():
