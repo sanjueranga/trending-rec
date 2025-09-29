@@ -24,7 +24,7 @@ class GenerationService:
         Returns:
             str: Generated and filtered response
         """
-        # Validate inputs
+        # Validate required inputs
         for input_value, input_name in [
             (topic, "topic"),
             (intention, "intention"),
@@ -33,11 +33,17 @@ class GenerationService:
             error = self.response_filter.validate_prompt(input_value)
             if error:
                 raise ValueError(f"Invalid {input_name}: {error}")
+
+        # Only validate content if it is provided (not None and not empty string)
+        if content is not None and str(content).strip() != "":
+            error = self.response_filter.validate_prompt(content)
+            if error:
+                raise ValueError(f"Invalid content: {error}")
         # Optionally, you can use the content parameter in prompt construction if needed
 
         # Combine base system prompt with formatted recommendation template
         recommendation_prompt = self.settings.RECOMMENDATION_PROMPT_TEMPLATE.format(
-            topic=topic, intention=intention, theme=theme
+            topic=topic, intention=intention, theme=theme, content=content
         )
 
         system_prompt = f"{self.settings.BASE_SYSTEM_PROMPT}\n\n{recommendation_prompt}"
