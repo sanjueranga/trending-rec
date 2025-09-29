@@ -268,6 +268,7 @@ export default function PromptForm() {
         };
         console.log("Sending request body:", JSON.stringify(requestBody, null, 2));
         const promptTexts = await generatePrompts(requestBody);
+        console.log("Received prompts:", promptTexts);
         return promptTexts.map((c, index) => ({ id: `prompt-${Date.now()}-${index}`, content: c.trim() }));
     };
 
@@ -290,6 +291,7 @@ export default function PromptForm() {
 
         try {
             const prompts = await fetchPrompts();
+            console.log("Generated Prompts:", prompts);
             setGeneratedPrompts(prompts);
             toast.dismiss(loadingToast);
             toast.success(`Generated ${prompts.length} custom prompts for your ${intention} project.`);
