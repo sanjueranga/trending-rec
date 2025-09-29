@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field, validator
 from typing import List, Dict, Any, Optional
 from ..services.generation_service import GenerationService
 from ..core.config import get_settings
+import fastapi_limiter.depends
+from fastapi_limiter.depends import RateLimiter
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -42,7 +44,7 @@ def get_generation_service() -> GenerationService:
     return GenerationService()
 
 
-@router.post("/generate", response_model=GenerateResponse)
+@router.post("/generate", response_model=GenerateResponse,  dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def generate_prompts(
     request: GenerateRequest,
     service: GenerationService = Depends(get_generation_service),
