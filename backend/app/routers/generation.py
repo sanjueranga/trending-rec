@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import Dict, Any
+import logging
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, Field, validator
+from typing import List, Dict, Any, Optional
 from ..services.generation_service import GenerationService
+from ..core.config import get_settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -20,20 +23,47 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
-    response: list
+    success: bool = True
+    prompts: List[str]
+    count: int
+    cached: bool = False
+    metadata: Dict[str, Any] = {}
 
 
 class ErrorResponse(BaseModel):
-    status: str = "error"
-    message: str
-    details: Dict[str, Any] = None
+    success: bool = False
+    error: str
+    details: Optional[Dict[str, Any]] = None
+
+
+# Dependency to get service instance
+def get_generation_service() -> GenerationService:
+    """Dependency to provide GenerationService instance."""
+    return GenerationService()
 
 
 @router.post("/generate", response_model=GenerateResponse)
-async def generate_response(request: GenerateRequest):
+async def generate_prompts(
+    request: GenerateRequest,
+    service: GenerationService = Depends(get_generation_service),
+):
     """
-    Generate a recommendation based on the provided topic, intention, theme, and content.
+    Generate content prompts based on topic, intention, and theme.
+
+    Args:
+        request: Generation request parameters
+        service: Injected generation service
+
+    Returns:
+        GenerateResponse: Generated prompts with metadata
+
+    Raises:
+        HTTPException: For various error conditions
     """
+    logger.info(
+        f"Generation request: topic='{request.topic}', intention='{request.intention}', theme='{request.theme}'"
+    )
+
     try:
         service = GenerationService()
         # Pass content to the service if needed in the future
@@ -43,10 +73,25 @@ async def generate_response(request: GenerateRequest):
         # Optionally, you can use request.content in the service if needed
         return GenerateResponse(response=response)
     except ValueError as e:
+        # Input validation errors
+        logger.warning(f"Validation error: {str(e)}")
         raise HTTPException(
             status_code=400, detail=ErrorResponse(status="error", message=str(e)).dict()
         )
+
     except Exception as e:
+        # General errors (API failures, etc.)
+        logger.error(f"Generation failed: {str(e)}")
+
+        # Don't expose internal errors in production
+        settings = get_settings()
+        if settings.DEBUG:
+            error_detail = str(e)
+        else:
+            error_detail = (
+                "An error occurred while generating content. Please try again."
+            )
+
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
@@ -55,3 +100,45 @@ async def generate_response(request: GenerateRequest):
                 details={"error": str(e)},
             ).dict(),
         )
+
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for the generation service."""
+    return {"status": "healthy", "service": "prompt_generation"}
+
+
+@router.post("/validate")
+async def validate_request(request: GenerateRequest):
+    """
+    Validate a generation request without actually generating content.
+    Useful for form validation on the frontend.
+    """
+    try:
+        service = get_generation_service()
+        service._validate_inputs(request.topic, request.intention, request.theme)
+
+        return {"valid": True, "message": "Request parameters are valid"}
+    except ValueError as e:
+        return {"valid": False, "message": str(e)}
+
+
+@router.get("/stats")
+async def get_service_stats(
+    service: GenerationService = Depends(get_generation_service),
+):
+    """Get service statistics including cache info."""
+    cache_stats = service.get_cache_stats()
+
+    return {
+        "service": "prompt_generation",
+        "cache_stats": cache_stats,
+        "supported_intentions": ["video", "app", "learning"],
+    }
+
+
+@router.delete("/cache")
+async def clear_cache(service: GenerationService = Depends(get_generation_service)):
+    """Clear the service cache."""
+    service.clear_cache()
+    return {"success": True, "message": "Cache cleared successfully"}
