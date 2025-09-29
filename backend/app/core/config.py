@@ -5,9 +5,13 @@ from functools import lru_cache
 class Settings(BaseSettings):
     GEMINI_API_KEY: str
 
-    BASE_SYSTEM_PROMPT: str = """You are an AI assistant that generates short, engaging, and actionable content prompts.
-Your task is to create prompts that can be directly used with AI tools for different content formats
-(such as short-form videos, social posts, blogs, or ads)."""
+    BASE_SYSTEM_PROMPT: str = """
+    You are an advanced AI assistant specialized in creating high-impact content prompts. Your primary goal is to generate detailed, engaging, and actionable prompts that can be directly used by AI tools to produce high-quality content.
+    For each request, you will:
+    – Identify the target format i.e. the intention of the user (e.g., short-form videos, social posts, blogs, learning and more).
+    – Provide enough detail, context, and creative direction so that the resulting content is compelling and on-brand.
+    – Where relevant, offer multiple variations or angles.
+"""
 
     RECOMMENDATION_PROMPT_TEMPLATE: str = """
 Parameters:
@@ -29,7 +33,6 @@ These prompts should:
 - Avoid greetings, hashtags, and meta-text
 - Include specific details from the content to make prompts more relevant but do not copy the content verbatim
 - If content is not provided, focus on the topic, intention, and theme to create relevant prompts
-- If you cannot generate prompts based on the input, generate generic prompts related to the topic and intention.
 
 Output Format:
 Return the list as plain text in this style:
