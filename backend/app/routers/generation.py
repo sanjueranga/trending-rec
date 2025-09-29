@@ -70,75 +70,38 @@ async def generate_prompts(
         response = await service.generate_response(
             topic=request.topic, intention=request.intention, theme=request.theme
         )
-        # Optionally, you can use request.content in the service if needed
-        return GenerateResponse(response=response)
+     
+        # Create response assuming response is a list of prompts
+        return GenerateResponse(
+            prompts=response if isinstance(response, list) else [],
+            count=len(response) if isinstance(response, list) else 0,
+            metadata={},
+            cached=False
+        )
+        
     except ValueError as e:
         # Input validation errors
         logger.warning(f"Validation error: {str(e)}")
         raise HTTPException(
-            status_code=400, detail=ErrorResponse(status="error", message=str(e)).dict()
+            status_code=400, 
+            detail=ErrorResponse(
+                error=str(e),
+                details={"type": "validation_error"}
+            ).dict()
         )
 
     except Exception as e:
         # General errors (API failures, etc.)
         logger.error(f"Generation failed: {str(e)}")
 
-        # Don't expose internal errors in production
-        settings = get_settings()
-        if settings.DEBUG:
-            error_detail = str(e)
-        else:
-            error_detail = (
-                "An error occurred while generating content. Please try again."
-            )
-
+        # Use a generic error message for production
+        error_message = "An error occurred while generating content. Please try again."
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                status="error",
-                message="Internal server error",
-                details={"error": str(e)},
-            ).dict(),
+                error=error_message,
+                details={"internal_error": str(e)}
+            ).dict()
         )
 
 
-@router.get("/health")
-async def health_check():
-    """Health check endpoint for the generation service."""
-    return {"status": "healthy", "service": "prompt_generation"}
-
-
-@router.post("/validate")
-async def validate_request(request: GenerateRequest):
-    """
-    Validate a generation request without actually generating content.
-    Useful for form validation on the frontend.
-    """
-    try:
-        service = get_generation_service()
-        service._validate_inputs(request.topic, request.intention, request.theme)
-
-        return {"valid": True, "message": "Request parameters are valid"}
-    except ValueError as e:
-        return {"valid": False, "message": str(e)}
-
-
-@router.get("/stats")
-async def get_service_stats(
-    service: GenerationService = Depends(get_generation_service),
-):
-    """Get service statistics including cache info."""
-    cache_stats = service.get_cache_stats()
-
-    return {
-        "service": "prompt_generation",
-        "cache_stats": cache_stats,
-        "supported_intentions": ["video", "app", "learning"],
-    }
-
-
-@router.delete("/cache")
-async def clear_cache(service: GenerationService = Depends(get_generation_service)):
-    """Clear the service cache."""
-    service.clear_cache()
-    return {"success": True, "message": "Cache cleared successfully"}

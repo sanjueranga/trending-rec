@@ -67,12 +67,15 @@ class GeminiProvider(LLMProvider):
         
         try:
             response = await self.model.generate_content_async(combined_prompt)
-            prompts = self._format_response(response.text)
             
-            # Format as a clean numbered list
-            formatted_response = "\n".join(f"{i}. {prompt}" for i, prompt in enumerate(prompts, 1))
+            # Extract text from response parts
+            text = ""
+            for part in response.parts:
+                text += part.text
             
-            return formatted_response
+            # Format the response
+            prompts = self._format_response(text)
+            return prompts
             
         except Exception as e:
             raise Exception(f"Error generating response from Gemini: {str(e)}")
