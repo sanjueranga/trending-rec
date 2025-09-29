@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         source: '/api/backend/:path*',
         destination: 'http://localhost:8000/api/:path*',
       },
+      {
+        source: '/api/n8n/:path*',
+        destination: 'http://localhost:5678/:path*',
+      },
     ];
   },
   env: {
