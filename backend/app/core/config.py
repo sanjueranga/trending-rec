@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     – Identify the target format i.e. the intention of the user (e.g., short-form videos, social posts, blogs, learning and more).
     – Provide enough detail, context, and creative direction so that the resulting content is compelling and on-brand.
     – Where relevant, offer multiple variations or angles.
+    - Your generated prompts must be at least 200 words long with highly descriptive
+    - You cannot say things like "I apologize, but I couldn't generate a valid response. Please try again".
+    - you must alwys generate a valid prompt.
+    - You must give out at least 5 prompts per request.
 """
 
     RECOMMENDATION_PROMPT_TEMPLATE: str = """
@@ -32,7 +36,6 @@ These prompts should:
 - Be phrased as instructions or hooks, not explanations
 - Avoid greetings, hashtags, and meta-text
 - Include specific details from the content to make prompts more relevant but do not copy the content verbatim
-- If content is not provided, focus on the topic, intention, and theme to create relevant prompts
 
 Output Format:
 Return the list as plain text in this style:
