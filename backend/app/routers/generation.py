@@ -44,7 +44,11 @@ def get_generation_service() -> GenerationService:
     return GenerationService()
 
 
-@router.post("/generate", response_model=GenerateResponse,  dependencies=[Depends(RateLimiter(times=5, seconds=60))])
+@router.post(
+    "/generate",
+    response_model=GenerateResponse,
+    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+)
 async def generate_prompts(
     request: GenerateRequest,
     service: GenerationService = Depends(get_generation_service),
@@ -67,29 +71,45 @@ async def generate_prompts(
     )
 
     try:
-        service = GenerationService()
-        # Pass content to the service if needed in the future
-        response = await service.generate_response(
-            topic=request.topic, intention=request.intention, theme=request.theme
+        # Pass content to the service
+        prompts = await service.generate_response(
+            topic=request.topic,
+            intention=request.intention,
+            theme=request.theme,
+            content=request.content,
         )
-     
-        # Create response assuming response is a list of prompts
+
+        # Ensure we have a list of prompts
+        if not isinstance(prompts, list):
+            prompts = [str(prompts)] if prompts else []
+
+        # CRITICAL: Validate we have at least 1 prompt
+        if len(prompts) == 0:
+            logger.error("Service returned empty prompt list")
+            raise ValueError("Failed to generate any prompts. Please try again.")
+
+        logger.info(f"Returning {len(prompts)} prompts to client")
+
+        # Create response
         return GenerateResponse(
-            prompts=response if isinstance(response, list) else [],
-            count=len(response) if isinstance(response, list) else 0,
-            metadata={},
-            cached=False
+            prompts=prompts,
+            count=len(prompts),
+            metadata={
+                "topic": request.topic,
+                "intention": request.intention,
+                "theme_length": len(request.theme),
+            },
+            cached=False,
         )
-        
+
     except ValueError as e:
         # Input validation errors
         logger.warning(f"Validation error: {str(e)}")
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=ErrorResponse(
-                error=str(e),
-                details={"type": "validation_error"}
-            ).dict()
+                error=str(e), details={"type": "validation_error"}
+            ).dict(),
         )
 
     except Exception as e:
@@ -101,9 +121,6 @@ async def generate_prompts(
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                error=error_message,
-                details={"internal_error": str(e)}
-            ).dict()
+                error=error_message, details={"internal_error": str(e)}
+            ).dict(),
         )
-
-
