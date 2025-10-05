@@ -72,8 +72,22 @@ class GenerationService:
                 logger.info(f"Raw response type: {type(raw_response)}")
                 logger.debug(f"Raw response preview: {str(raw_response)[:200]}...")
 
-                # Filter response
-                filtered_response = self.response_filter.filter_response(raw_response)
+                # Filter response - this will raise ValueError if invalid
+                try:
+                    filtered_response = self.response_filter.filter_response(
+                        raw_response
+                    )
+                except ValueError as ve:
+                    logger.warning(f"Filter rejected response: {str(ve)}")
+                    # If this is the last attempt, don't retry
+                    if attempt == self.max_retries - 1:
+                        logger.error("All retries exhausted due to filter rejections")
+                        raise
+                    # Otherwise continue to retry
+                    logger.info(
+                        f"Retrying due to filter rejection (attempt {attempt + 1}/{self.max_retries})"
+                    )
+                    continue
 
                 logger.info(f"Filtered response preview: {filtered_response[:200]}...")
 
@@ -87,19 +101,41 @@ class GenerationService:
 
                 # CRITICAL: Ensure we have at least 1 prompt
                 if len(validated_prompts) > 0:
-                    logger.info(
-                        f"Successfully generated {len(validated_prompts)} prompts"
-                    )
-                    return validated_prompts
+                    # Double check none of the prompts are error messages
+                    clean_prompts = [
+                        p
+                        for p in validated_prompts
+                        if not (
+                            "apologize" in p.lower() or "please try again" in p.lower()
+                        )
+                    ]
+
+                    if len(clean_prompts) > 0:
+                        logger.info(
+                            f"Successfully generated {len(clean_prompts)} valid prompts"
+                        )
+                        return clean_prompts
+                    else:
+                        logger.warning(
+                            f"Attempt {attempt + 1}: All prompts were error messages, retrying..."
+                        )
                 else:
                     logger.warning(
                         f"Attempt {attempt + 1}: No valid prompts generated, retrying..."
                     )
 
-            except Exception as e:
-                logger.error(f"Attempt {attempt + 1} failed: {str(e)}")
+            except ValueError as ve:
+                # This is expected for filter rejections - continue retrying
+                logger.warning(f"Attempt {attempt + 1} - filter rejection: {str(ve)}")
                 if attempt == self.max_retries - 1:
-                    raise
+                    logger.error("All retry attempts exhausted")
+                    # Don't raise, fall through to fallback
+                    break
+            except Exception as e:
+                logger.error(f"Attempt {attempt + 1} failed with error: {str(e)}")
+                if attempt == self.max_retries - 1:
+                    # Don't raise, fall through to fallback
+                    break
 
         # FALLBACK: If all retries fail, generate a basic prompt
         logger.error("All retry attempts failed, generating fallback prompt")
