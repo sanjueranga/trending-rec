@@ -107,12 +107,16 @@ class ResponseFilter:
     def filter_response(self, response: any) -> str:
         """
         Filter LLM response for compliance and quality.
+        Raises ValueError if response is invalid to trigger automatic retry.
 
         Args:
             response: Raw response from LLM (can be str, list, or other types)
 
         Returns:
             str: Filtered and compliant response
+
+        Raises:
+            ValueError: If response is invalid or non-compliant (triggers retry)
         """
         try:
             # Handle different response types
@@ -128,7 +132,8 @@ class ResponseFilter:
 
             # Now process the string response
             if not response or not response.strip():
-                return "I apologize, but I couldn't generate a valid response. Please try again."
+                logger.warning("Empty response received from LLM")
+                raise ValueError("Empty response - retry needed")
 
             compliance_result = self._check_compliance(response)
 
@@ -136,13 +141,18 @@ class ResponseFilter:
                 logger.warning(
                     f"Non-compliant response filtered. Issues: {compliance_result.issues}"
                 )
-                return "I apologize, but I need to generate a different response to ensure it meets our guidelines. Please try again."
+                raise ValueError(
+                    f"Non-compliant response - retry needed: {', '.join(compliance_result.issues)}"
+                )
 
             return compliance_result.filtered_content
 
+        except ValueError:
+            # Re-raise ValueError to trigger retry
+            raise
         except Exception as e:
             logger.error(f"Error filtering response: {str(e)}", exc_info=True)
-            return "An error occurred while processing the response. Please try again."
+            raise ValueError(f"Error processing response - retry needed: {str(e)}")
 
     def _check_compliance(self, content: any) -> ComplianceResult:
         """
