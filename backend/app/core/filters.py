@@ -73,7 +73,7 @@ class ResponseFilter:
         if len(prompt) < 2:
             return "Prompt too short (minimum 2 characters)"
         if len(prompt) > 500:
-            return "Prompt too long (maximum 500 characters)"
+            prompt = prompt[:500]  # Truncate to max length
 
         # Check for prohibited content
         for pattern in self.prohibited_patterns:
